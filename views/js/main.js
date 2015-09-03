@@ -482,8 +482,9 @@ console.log("Time to generate pizzas on load: " + timeToGenerate[0].duration + "
 
 // Iterator for number of times the pizzas in the background have scrolled.
 // Used by updatePositions() to decide when to log the average time per frame
-var frame = 0;
-
+var frame = 0,
+    latestKnownScrollY = 0,
+    ticking = !1;
 // Logs the average amount of time per 10 frames needed to move the sliding background pizzas on scroll.
 function logAverageFrame(times) {   // times is the array of User Timing measurements from updatePositions()
   var numberOfEntries = times.length;
@@ -492,6 +493,14 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
     sum = sum + times[i].duration;
   }
   console.log("Average time to generate last 10 frames: " + sum / 10 + "ms");
+}
+
+function onScroll() {
+    latestKnownScrollY = window.scrollY, requestTick()
+}
+
+function requestTick() {
+    ticking || window.requestAnimationFrame(updatePositions), ticking = !0
 }
 
 // The following code for sliding background pizzas was pulled from Ilya's demo found at:
@@ -503,19 +512,16 @@ function updatePositions() {
   window.performance.mark("mark_start_frame");
 
   var items = document.querySelectorAll('.mover');
-  for (var i = 0; i < items.length; i++) {
-    var phase = Math.sin((document.body.scrollTop / 1250) + (i % 5));
-    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+  for (var e = latestKnownScrollY / 1250, var i = 0; i < items.length; i++) {
+     var phase = Math.sin(e + i % 5);
+     window.items[i].style.transform = "translateX(" + 100 * phase + "px)"
   }
 
-  // User Timing API to the rescue again. Seriously, it's worth learning.
-  // Super easy to create custom metrics.
-  window.performance.mark("mark_end_frame");
-  window.performance.measure("measure_frame_duration", "mark_start_frame", "mark_end_frame");
-  if (frame % 10 === 0) {
-    var timesToUpdatePosition = window.performance.getEntriesByName("measure_frame_duration");
-    logAverageFrame(timesToUpdatePosition);
-  }
+  if (window.performance.mark("mark_end_frame"), window.performance.measure("measure_frame_duration", "mark_start_frame", "mark_end_frame"), frame % 10 === 0) {
+        var n = window.performance.getEntriesByName("measure_frame_duration");
+        logAverageFrame(n)
+    }
+    window.ticking = !1
 }
 
 // runs updatePositions on scroll
